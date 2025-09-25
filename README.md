@@ -13,10 +13,22 @@ This project is an interactive web report for automated mastitis detection, feat
 2. Open `Mastitis web.html` in any modern web browser.
 3. Explore the interactive sections and visualizations.
 
+
 ## Deployment
-This site can be deployed using GitHub Pages:
+
+### GitHub Pages
 - The `gh-pages` branch is ready for deployment.
 - Visit your repository's Settings > Pages to enable it.
+- Once enabled, your site will be live at:
+	[https://alaatahaelmaria.github.io/Matitis/](https://alaatahaelmaria.github.io/Matitis/)
+
+### Vercel
+- This project is also ready for deployment on [Vercel](https://vercel.com/):
+	1. Go to [vercel.com](https://vercel.com/) and sign in with your GitHub account.
+	2. Import the repository: `Alaatahaelmaria/Matitis`.
+	3. Vercel will auto-detect and deploy your static site.
+- The main page is `Mastitis web.html` (see `vercel.json`).
+- After deployment, Vercel will provide a live URL for your site.
 
 ## Technologies Used
 - HTML5
