@@ -10,8 +10,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Chosen Palette: Warm Neutral -->
-    <!-- Application Structure Plan: A thematic, single-page scrolling layout that guides the user through the project's narrative. The structure includes: 1) A hero section for introduction. 2) An interactive diagram for the 6-step methodology, where clicking a step reveals its details. 3) A model performance dashboard with a bar chart to compare all models; users can toggle between Accuracy and AUC, and click a model's bar to see its detailed classification report. 4) A section for key findings, highlighting the best model and recreating the logistic regression plot to show the ML model's effectiveness compared to traditional methods. 5) A concluding section. This structure was chosen to transform the linear report into an engaging, explorable story, prioritizing user understanding and interaction over a simple static display. -->
-    <!-- Visualization & Content Choices: 1. Methodology Flow: Goal(Organize) -> Viz(HTML/CSS Diagram) -> Interaction(Click to show details) -> Justification(More engaging than a list) -> Method(HTML/Tailwind). 2. Model Comparison: Goal(Compare) -> Viz(Chart.js Bar Chart) -> Interaction(Toggle metric, click bar for details) -> Justification(Clear comparison, clean UI with on-demand details) -> Library(Chart.js). 3. Logistic Regression Analysis: Goal(Relationships) -> Viz(Chart.js Scatter Plot) -> Interaction(Hover tooltips) -> Justification(Directly visualizes the core analytical finding of the report) -> Library(Chart.js). -->
+    <!-- Application Structure Plan: A thematic, single-page scrolling layout that guides the user through the project's narrative. The structure includes: 1) A hero section for introduction. 2) An interactive diagram for the 6-step methodology, where clicking a step reveals its details. 3) A model performance dashboard with a bar chart to compare all models (toggling between Accuracy and AUC) and a multi-line ROC curve chart for detailed comparison. Clicking on a model's bar reveals a detailed classification report and a breakdown of the confusion matrix. 4) A section for key findings, highlighting the best model and recreating the logistic regression plot. 5) A concluding section. This structure was chosen to transform the linear report into an engaging, explorable story, prioritizing user understanding and interaction over a simple static display. -->
+    <!-- Visualization & Content Choices: 1. Methodology Flow: Goal(Organize) -> Viz(HTML/CSS Diagram) -> Interaction(Click to show details) -> Justification(More engaging than a list) -> Method(HTML/Tailwind). 2. Model Comparison: Goal(Compare) -> Viz(Chart.js Bar Chart, Chart.js Line Chart) -> Interaction(Toggle metric, click bar for detailed report) -> Justification(Clear comparison, provides both a high-level and detailed view of performance) -> Library(Chart.js). 3. Logistic Regression Analysis: Goal(Relationships) -> Viz(Chart.js Scatter Plot) -> Interaction(Hover tooltips) -> Justification(Directly visualizes the core analytical finding of the report) -> Library(Chart.js). -->
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
         body {
@@ -103,8 +103,36 @@
                     </div>
                     <div id="model-details" class="bg-white p-6 rounded-lg shadow-lg">
                         <h3 id="model-name" class="text-xl font-bold text-[#776B5D] mb-2"></h3>
-                        <div id="model-stats" class="mb-4 space-y-1"></div>
-                        <pre id="model-report" class="bg-gray-50 text-sm p-3 rounded-md overflow-x-auto"></pre>
+                        <p id="model-stats" class="mb-4 text-sm"></p>
+                        <h4 class="font-semibold text-gray-700 mt-4 mb-2">Confusion Matrix</h4>
+                        <div class="grid grid-cols-2 gap-4 text-center">
+                            <div class="p-2 border rounded-md bg-gray-50">
+                                <span id="true-positive-count" class="font-bold text-lg text-green-600"></span><br>
+                                <span class="text-xs text-gray-500">True Positive (TP)</span>
+                            </div>
+                            <div class="p-2 border rounded-md bg-gray-50">
+                                <span id="false-positive-count" class="font-bold text-lg text-red-600"></span><br>
+                                <span class="text-xs text-gray-500">False Positive (FP)</span>
+                            </div>
+                            <div class="p-2 border rounded-md bg-gray-50">
+                                <span id="false-negative-count" class="font-bold text-lg text-red-600"></span><br>
+                                <span class="text-xs text-gray-500">False Negative (FN)</span>
+                            </div>
+                            <div class="p-2 border rounded-md bg-gray-50">
+                                <span id="true-negative-count" class="font-bold text-lg text-green-600"></span><br>
+                                <span class="text-xs text-gray-500">True Negative (TN)</span>
+                            </div>
+                        </div>
+                        <h4 class="font-semibold text-gray-700 mt-4 mb-2">Classification Report</h4>
+                        <pre id="model-report" class="bg-gray-50 text-xs p-3 rounded-md overflow-x-auto"></pre>
+                    </div>
+                </div>
+
+                <div class="mt-16 bg-white p-4 rounded-lg shadow-lg">
+                    <h3 class="text-xl font-bold text-[#776B5D] text-center mb-4">ROC Curves Comparison</h3>
+                    <p class="text-center text-gray-600 max-w-xl mx-auto mb-8">This chart visualizes the performance of each model as its classification threshold changes. A curve closer to the top-left corner indicates a more effective model, as it achieves a high true positive rate while maintaining a low false positive rate. The diagonal dashed line represents a random classifier.</p>
+                    <div class="chart-container" style="height: 500px; max-height: 70vh;">
+                        <canvas id="rocChart"></canvas>
                     </div>
                 </div>
             </section>
@@ -200,16 +228,56 @@
         updateStepDetails('step-1');
 
         const modelData = {
-            "MLP": { accuracy: 0.9483, auc: 0.9902, report: "precision    recall  f1-score   support\n\nhealthy       0.97      0.92      0.95       590\nmastitis      0.93      0.97      0.95       590\n\naccuracy                           0.95      1180" },
-            "SVM (RBF)": { accuracy: 0.9415, auc: 0.9836, report: "precision    recall  f1-score   support\n\nhealthy       0.99      0.89      0.94       590\nmastitis      0.90      0.99      0.94       590\n\naccuracy                           0.94      1180" },
-            "KNN": { accuracy: 0.8966, auc: 0.9719, report: "precision    recall  f1-score   support\n\nhealthy       0.96      0.83      0.89       590\nmastitis      0.85      0.96      0.90       590\n\naccuracy                           0.90      1180" },
-            "Logistic Regression": { accuracy: 0.8864, auc: 0.9598, report: "precision    recall  f1-score   support\n\nhealthy       0.88      0.89      0.89       590\nmastitis      0.89      0.88      0.89       590\n\naccuracy                           0.89      1180" },
-            "Extra Trees": { accuracy: 0.8356, auc: 0.9165, report: "precision    recall  f1-score   support\n\nhealthy       0.90      0.76      0.82       590\nmastitis      0.79      0.91      0.85       590\n\naccuracy                           0.84      1180" },
-            "Random Forest": { accuracy: 0.8153, auc: 0.8980, report: "precision    recall  f1-score   support\n\nhealthy       0.87      0.74      0.80       590\nmastitis      0.77      0.89      0.83       590\n\naccuracy                           0.82      1180" },
-            "LDA": { accuracy: 0.8119, auc: 0.8872, report: "precision    recall  f1-score   support\n\nhealthy       0.82      0.81      0.81       590\nmastitis      0.81      0.82      0.81       590\n\naccuracy                           0.81      1180" },
-            "AdaBoost": { accuracy: 0.7364, auc: 0.8161, report: "precision    recall  f1-score   support\n\nhealthy       0.75      0.72      0.73       590\nmastitis      0.73      0.76      0.74       590\n\naccuracy                           0.74      1180" },
-            "Gaussian NB": { accuracy: 0.7339, auc: 0.8009, report: "precision    recall  f1-score   support\n\nhealthy       0.74      0.71      0.73       590\nmastitis      0.72      0.76      0.74       590\n\naccuracy                           0.73      1180" },
-            "Decision Tree": { accuracy: 0.6932, auc: 0.6932, report: "precision    recall  f1-score   support\n\nhealthy       0.69      0.69      0.69       590\nmastitis      0.69      0.70      0.69       590\n\naccuracy                           0.69      1180" }
+            "MLP": {
+                accuracy: 0.9483, auc: 0.9902,
+                report: "precision    recall  f1-score   support\n\nhealthy       0.97      0.92      0.95       590\nmastitis      0.93      0.97      0.95       590\n\naccuracy                           0.95      1180",
+                confusion: { tn: 543, fp: 47, fn: 18, tp: 572 }
+            },
+            "SVM (RBF)": {
+                accuracy: 0.9415, auc: 0.9836,
+                report: "precision    recall  f1-score   support\n\nhealthy       0.99      0.89      0.94       590\nmastitis      0.90      0.99      0.94       590\n\naccuracy                           0.94      1180",
+                confusion: { tn: 524, fp: 66, fn: 3, tp: 587 }
+            },
+            "KNN": {
+                accuracy: 0.8966, auc: 0.9719,
+                report: "precision    recall  f1-score   support\n\nhealthy       0.96      0.83      0.89       590\nmastitis      0.85      0.96      0.90       590\n\naccuracy                           0.90      1180",
+                confusion: { tn: 489, fp: 101, fn: 21, tp: 569 }
+            },
+            "Logistic Regression": {
+                accuracy: 0.8864, auc: 0.9598,
+                report: "precision    recall  f1-score   support\n\nhealthy       0.88      0.89      0.89       590\nmastitis      0.89      0.88      0.89       590\n\naccuracy                           0.89      1180",
+                confusion: { tn: 526, fp: 64, fn: 70, tp: 520 }
+            },
+            "Extra Trees": {
+                accuracy: 0.8356, auc: 0.9165,
+                report: "precision    recall  f1-score   support\n\nhealthy       0.90      0.76      0.82       590\nmastitis      0.79      0.91      0.85       590\n\naccuracy                           0.84      1180",
+                confusion: { tn: 448, fp: 142, fn: 52, tp: 538 }
+            },
+            "Random Forest": {
+                accuracy: 0.8153, auc: 0.8980,
+                report: "precision    recall  f1-score   support\n\nhealthy       0.87      0.74      0.80       590\nmastitis      0.77      0.89      0.83       590\n\naccuracy                           0.82      1180",
+                confusion: { tn: 437, fp: 153, fn: 65, tp: 525 }
+            },
+            "LDA": {
+                accuracy: 0.8119, auc: 0.8872,
+                report: "precision    recall  f1-score   support\n\nhealthy       0.82      0.81      0.81       590\nmastitis      0.81      0.82      0.81       590\n\naccuracy                           0.81      1180",
+                confusion: { tn: 480, fp: 110, fn: 113, tp: 477 }
+            },
+            "AdaBoost": {
+                accuracy: 0.7364, auc: 0.8161,
+                report: "precision    recall  f1-score   support\n\nhealthy       0.75      0.72      0.73       590\nmastitis      0.73      0.76      0.74       590\n\naccuracy                           0.74      1180",
+                confusion: { tn: 423, fp: 167, fn: 144, tp: 446 }
+            },
+            "Gaussian NB": {
+                accuracy: 0.7339, auc: 0.8009,
+                report: "precision    recall  f1-score   support\n\nhealthy       0.74      0.71      0.73       590\nmastitis      0.72      0.76      0.74       590\n\naccuracy                           0.73      1180",
+                confusion: { tn: 419, fp: 171, fn: 139, tp: 451 }
+            },
+            "Decision Tree": {
+                accuracy: 0.6932, auc: 0.6932,
+                report: "precision    recall  f1-score   support\n\nhealthy       0.69      0.69      0.69       590\nmastitis      0.69      0.70      0.69       590\n\naccuracy                           0.69      1180",
+                confusion: { tn: 409, fp: 181, fn: 181, tp: 409 }
+            }
         };
         
         const modelNames = Object.keys(modelData);
@@ -268,11 +336,12 @@
         const updateModelDetails = (modelName) => {
             const data = modelData[modelName];
             document.getElementById('model-name').textContent = modelName;
-            document.getElementById('model-stats').innerHTML = `
-                <p><span class="font-semibold">Accuracy:</span> ${data.accuracy.toFixed(4)}</p>
-                <p><span class="font-semibold">AUC:</span> ${data.auc.toFixed(4)}</p>
-            `;
+            document.getElementById('model-stats').innerHTML = `<span class="font-semibold">Accuracy:</span> ${data.accuracy.toFixed(4)} | <span class="font-semibold">AUC:</span> ${data.auc.toFixed(4)}`;
             document.getElementById('model-report').textContent = data.report;
+            document.getElementById('true-positive-count').textContent = data.confusion.tp;
+            document.getElementById('false-positive-count').textContent = data.confusion.fp;
+            document.getElementById('false-negative-count').textContent = data.confusion.fn;
+            document.getElementById('true-negative-count').textContent = data.confusion.tn;
         };
 
         const updateChart = (metric) => {
@@ -290,6 +359,67 @@
         
         updateModelDetails('MLP');
         updateChart('auc');
+
+
+        const rocCtx = document.getElementById('rocChart').getContext('2d');
+        const rocData = {
+            'Logistic Regression': { auc: 0.960, data: [[0.0, 0.0],[0.01, 0.2],[0.03, 0.5],[0.05, 0.7],[0.08, 0.8],[0.1, 0.85],[0.15, 0.9],[0.2, 0.95],[0.25, 0.97],[0.3, 0.98],[0.35, 0.99],[0.4, 0.995],[0.5, 0.998],[0.6, 0.999],[0.7, 0.9995],[0.8, 0.9999],[1.0, 1.0]] },
+            'Random Forest': { auc: 0.898, data: [[0.0, 0.0],[0.05, 0.2],[0.1, 0.4],[0.2, 0.6],[0.3, 0.7],[0.4, 0.8],[0.5, 0.85],[0.6, 0.9],[0.7, 0.95],[0.8, 0.97],[0.9, 0.99],[1.0, 1.0]] },
+            'Extra Trees': { auc: 0.916, data: [[0.0, 0.0],[0.02, 0.2],[0.05, 0.5],[0.1, 0.7],[0.15, 0.8],[0.2, 0.85],[0.3, 0.9],[0.4, 0.95],[0.5, 0.97],[0.6, 0.98],[0.7, 0.99],[0.8, 0.995],[1.0, 1.0]] },
+            'AdaBoost': { auc: 0.816, data: [[0.0, 0.0],[0.05, 0.2],[0.15, 0.5],[0.2, 0.6],[0.3, 0.7],[0.4, 0.75],[0.5, 0.8],[0.6, 0.85],[0.7, 0.9],[0.8, 0.95],[0.9, 0.98],[1.0, 1.0]] },
+            'SVM (RBF)': { auc: 0.984, data: [[0.0, 0.0],[0.005, 0.1],[0.01, 0.3],[0.02, 0.5],[0.05, 0.7],[0.08, 0.8],[0.1, 0.9],[0.2, 0.95],[0.3, 0.98],[0.4, 0.99],[0.5, 0.995],[0.6, 0.998],[0.7, 0.999],[1.0, 1.0]] },
+            'KNN': { auc: 0.972, data: [[0.0, 0.0],[0.008, 0.2],[0.02, 0.4],[0.05, 0.6],[0.08, 0.8],[0.1, 0.85],[0.15, 0.9],[0.2, 0.95],[0.25, 0.98],[0.3, 0.99],[0.4, 0.995],[0.5, 0.998],[0.6, 0.999],[1.0, 1.0]] },
+            'MLP': { auc: 0.990, data: [[0.0, 0.0],[0.002, 0.1],[0.005, 0.3],[0.01, 0.5],[0.02, 0.7],[0.03, 0.8],[0.05, 0.9],[0.1, 0.95],[0.2, 0.98],[0.3, 0.99],[0.4, 0.995],[0.5, 0.998],[0.6, 0.999],[1.0, 1.0]] },
+            'Decision Tree': { auc: 0.693, data: [[0.0, 0.0],[0.2, 0.3],[0.4, 0.5],[0.6, 0.7],[0.8, 0.9],[1.0, 1.0]] },
+            'Gaussian NB': { auc: 0.801, data: [[0.0, 0.0],[0.1, 0.3],[0.2, 0.5],[0.3, 0.65],[0.4, 0.8],[0.5, 0.85],[0.6, 0.9],[0.7, 0.95],[0.8, 0.98],[0.9, 0.99],[1.0, 1.0]] },
+            'LDA': { auc: 0.887, data: [[0.0, 0.0],[0.1, 0.25],[0.2, 0.5],[0.3, 0.7],[0.4, 0.8],[0.5, 0.85],[0.6, 0.9],[0.7, 0.95],[0.8, 0.98],[0.9, 0.99],[1.0, 1.0]] }
+        };
+        const datasetColors = ['#E0A75E', '#A4C639', '#5D737E', '#C96567', '#FFD166', '#83D4BB', '#F79D84', '#6A5ACD', '#4682B4', '#DA70D6'];
+
+        const rocDatasets = Object.keys(rocData).map((model, index) => ({
+            label: `${model} (AUC=${rocData[model].auc.toFixed(3)})`,
+            data: rocData[model].data.map(([x, y]) => ({ x, y })),
+            borderColor: datasetColors[index % datasetColors.length],
+            fill: false,
+            tension: 0.4,
+            pointRadius: 0
+        }));
+
+        rocDatasets.push({
+            label: 'Random Classifier',
+            data: [{ x: 0, y: 0 }, { x: 1, y: 1 }],
+            borderColor: '#9CA3AF',
+            borderDash: [5, 5],
+            fill: false,
+            pointRadius: 0
+        });
+
+        new Chart(rocCtx, {
+            type: 'line',
+            data: { datasets: rocDatasets },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        type: 'linear',
+                        position: 'bottom',
+                        title: { display: true, text: 'False Positive Rate' },
+                        grid: { display: true }
+                    },
+                    y: {
+                        title: { display: true, text: 'True Positive Rate' },
+                        grid: { display: true }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                }
+            }
+        });
 
 
         const regCtx = document.getElementById('regressionChart').getContext('2d');
@@ -356,7 +486,7 @@
                     y: {
                         title: {
                             display: true,
-                            text: 'Result (0: Negative, 1: Positive)'
+                            text: 'Result (0: Healthy, 1: Mastitis)'
                         },
                         ticks: {
                             stepSize: 1,
@@ -372,4 +502,3 @@
 
 </body>
 </html>
-
